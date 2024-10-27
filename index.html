@@ -2,413 +2,243 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Parking Pass Verification</title>
-    <!-- Include jsQR Library for QR Code Scanning -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
-    <!-- Include Material Icons and Fonts -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>Gloucester Barcode Scanner</title>
+    <!-- QuaggaJS Library for Barcode Scanning -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        /* Styles for mobile-friendly and modern design */
+        /* Import Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 
+        /* Reset Margins and Padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f0f4f7;
+            background: linear-gradient(135deg, #e0f7e9, #b2f2bb);
+            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
+            min-height: 100vh;
             padding: 20px;
-            color: #333;
         }
 
-        h1 {
-            color: #2d6a4f;
+        /* Gloucester Logo */
+        .logo {
+            width: 150px;
             margin-bottom: 20px;
-            font-size: 24px;
-            text-align: center;
         }
 
-        .gloucester-logo img {
-            display: block;
-            margin: 0 auto 20px auto;
-            width: 200px;
-            height: auto;
-        }
-
+        /* Scanner Container */
         .scanner-container {
             width: 100%;
             max-width: 400px;
             position: relative;
-            margin-bottom: 20px;
         }
 
+        /* Video Element */
         #video {
             width: 100%;
+            height: auto;
+            border-radius: 12px;
             border: 2px solid #2d6a4f;
-            border-radius: 8px;
         }
 
-        #uploadInput {
-            display: none;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            background-color: #2d6a4f;
-            color: #fff;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 5px;
-            text-decoration: none;
-        }
-
-        .btn i.material-icons {
-            margin-right: 8px;
-        }
-
-        .btn:hover {
-            background-color: #22543d;
-        }
-
-        #output {
-            margin-top: 20px;
-            text-align: center;
-            width: 100%;
-        }
-
-        .details {
-            margin-top: 10px;
-            font-size: 18px;
-            text-align: left;
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .details p {
-            margin: 5px 0;
-        }
-
-        /* Loader Styles */
-        .loader {
-            border: 8px solid #f0f4f7;
-            border-top: 8px solid #2d6a4f;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-            margin-top: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 999; /* Sit on top */
-            left: 0;
+        /* Overlay for Scanning Area */
+        .overlay {
+            position: absolute;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto;
-            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
         }
 
-        .modal-content {
-            background-color: #fff;
-            margin: 15% auto; /* 15% from the top and centered */
-            padding: 20px;
-            border-radius: 8px;
+        .overlay .scan-area {
+            border: 4px dashed #d00000;
             width: 80%;
+            height: 30%;
+            position: absolute;
+            top: 35%;
+            left: 10%;
+            border-radius: 8px;
+        }
+
+        /* Phone Number Display */
+        .phone-display {
+            margin-top: 30px;
+            width: 100%;
             max-width: 400px;
             text-align: center;
         }
 
-        .modal-content.valid {
-            border: 5px solid #2d6a4f;
-        }
-
-        .modal-content.expired {
-            border: 5px solid #d00000;
-        }
-
-        .modal-content h2 {
-            margin: 0 0 10px 0;
-            font-size: 28px;
-        }
-
-        .modal-content.valid h2 {
-            color: #2d6a4f;
-        }
-
-        .modal-content.expired h2 {
-            color: #d00000;
-        }
-
-        .modal-content p {
-            font-size: 18px;
-        }
-
-        .close-btn {
-            background-color: transparent;
-            border: none;
-            color: #aaa;
-            float: right;
-            font-size: 28px;
+        .phone-number {
+            font-size: 24px;
             font-weight: bold;
-            cursor: pointer;
+            margin-bottom: 15px;
+            word-wrap: break-word;
         }
 
-        .close-btn:hover,
-        .close-btn:focus {
-            color: black;
+        /* Call Button */
+        .call-button {
+            display: none; /* Hidden by default */
+            padding: 12px 20px;
+            font-size: 18px;
+            background-color: #2d6a4f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
             text-decoration: none;
-            cursor: pointer;
+            transition: background-color 0.3s;
         }
 
-        /* Responsive Adjustments */
-        @media (max-width: 480px) {
-            h1 {
+        .call-button:hover {
+            background-color: #1b4332;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 500px) {
+            .logo {
+                width: 120px;
+            }
+
+            .phone-number {
                 font-size: 20px;
             }
 
-            .btn {
-                font-size: 14px;
-            }
-
-            .details {
+            .call-button {
                 font-size: 16px;
+                padding: 10px 16px;
             }
+        }
+
+        /* Status Message */
+        .status {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #d00000;
         }
     </style>
 </head>
 <body>
 
-    <!-- Building Logo -->
-    <div class="gloucester-logo">
-        <img src="https://i.imgur.com/LmweghF.png" alt="The Gloucester Logo">
-    </div>
+    <!-- Gloucester Logo -->
+    <img src="https://i.imgur.com/LmweghF.png" alt="Gloucester Logo" class="logo">
 
-    <h1>Parking Pass Verification</h1>
-
+    <!-- Scanner Section -->
     <div class="scanner-container">
-        <!-- Video Element for Scanning -->
-        <video id="video" autoplay playsinline></video>
-    </div>
-
-    <!-- Buttons for Camera and Upload -->
-    <div>
-        <button class="btn" id="startScan">
-            <i class="material-icons">camera_alt</i> Scan QR Code
-        </button>
-        <button class="btn" id="uploadBtn">
-            <i class="material-icons">file_upload</i> Upload QR Code
-        </button>
-        <input type="file" id="uploadInput" accept="image/*">
-    </div>
-
-    <!-- Loader -->
-    <div id="loader" style="display: none;">
-        <div class="loader"></div>
-        <p>Scanning...</p>
-    </div>
-
-    <!-- Output Area -->
-    <div id="output"></div>
-
-    <!-- Modal for Pass Status -->
-    <div id="statusModal" class="modal">
-        <div class="modal-content" id="modalContent">
-            <button class="close-btn" id="closeModal">&times;</button>
-            <h2 id="modalTitle">PASS STATUS</h2>
-            <p id="modalMessage"></p>
+        <video id="video" autoplay></video>
+        <div class="overlay">
+            <div class="scan-area"></div>
         </div>
     </div>
 
+    <!-- Phone Number Display Section -->
+    <div class="phone-display">
+        <div class="phone-number" id="phoneNumber">Scan a barcode to get the phone number.</div>
+        <a href="#" id="callButton" class="call-button">Call Now</a>
+        <div class="status" id="statusMessage"></div>
+    </div>
+
     <script>
-        const video = document.getElementById('video');
-        const output = document.getElementById('output');
-        const startScanBtn = document.getElementById('startScan');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const uploadInput = document.getElementById('uploadInput');
-        const loader = document.getElementById('loader');
-
-        const statusModal = document.getElementById('statusModal');
-        const modalContent = document.getElementById('modalContent');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalMessage = document.getElementById('modalMessage');
-        const closeModal = document.getElementById('closeModal');
-
-        let scanning = false;
-        let localStream = null;
-
-        // Start camera scan
-        startScanBtn.addEventListener('click', () => {
-            if (scanning) {
-                stopScan();
-            } else {
-                startScan();
-            }
-        });
-
-        function startScan() {
-            output.innerHTML = '';
-            loader.style.display = 'none';
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-            .then(function(stream) {
-                scanning = true;
-                localStream = stream;
-                video.srcObject = stream;
-                video.setAttribute('playsinline', true);
-                video.play();
-                requestAnimationFrame(tick);
-                startScanBtn.innerHTML = '<i class="material-icons">close</i> Stop Scan';
-            })
-            .catch(function(err) {
-                output.innerHTML = `<p style="color:red;">Error accessing camera: ${err}</p>`;
-            });
-        }
-
-        function stopScan() {
-            scanning = false;
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-            video.srcObject = null;
-            startScanBtn.innerHTML = '<i class="material-icons">camera_alt</i> Scan QR Code';
-        }
-
-        function tick() {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                const canvasElement = document.createElement('canvas');
-                const canvas = canvasElement.getContext('2d');
-
-                canvasElement.width = video.videoWidth;
-                canvasElement.height = video.videoHeight;
-                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
-
-                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                const code = jsQR(imageData.data, canvasElement.width, canvasElement.height);
-
-                if (code) {
-                    stopScan();
-                    processQRData(code.data);
-                    return;
-                }
-            }
-            if (scanning) {
-                requestAnimationFrame(tick);
-            }
-        }
-
-        // Upload image scan
-        uploadBtn.addEventListener('click', () => {
-            uploadInput.click();
-        });
-
-        uploadInput.addEventListener('change', (e) => {
-            if (uploadInput.files.length === 0) {
-                return;
-            }
-            output.innerHTML = '';
-            loader.style.display = 'block';
-
-            const file = uploadInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function() {
-                const img = new Image();
-                img.onload = function() {
-                    const canvasElement = document.createElement('canvas');
-                    const canvas = canvasElement.getContext('2d');
-
-                    canvasElement.width = img.width;
-                    canvasElement.height = img.height;
-                    canvas.drawImage(img, 0, 0, canvasElement.width, canvasElement.height);
-
-                    const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
-                    const code = jsQR(imageData.data, canvasElement.width, canvasElement.height);
-
-                    if (code) {
-                        processQRData(code.data);
-                    } else {
-                        output.innerHTML = `<p style="color:red;">No QR code found in the image.</p>`;
+        // Initialize QuaggaJS
+        function startScanner() {
+            if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+                Quagga.init({
+                    inputStream: {
+                        type: "LiveStream",
+                        constraints: {
+                            width: { min: 320 },
+                            height: { min: 240 },
+                            facingMode: "environment" // Use the back camera
+                        },
+                        target: document.querySelector('#video') // Or '#yourElement' (optional)
+                    },
+                    decoder: {
+                        readers: ["code_39_reader"] // Specify the barcode format
+                    },
+                    locate: true
+                }, function(err) {
+                    if (err) {
+                        console.error(err);
+                        document.getElementById('statusMessage').innerText = "Error initializing barcode scanner.";
+                        return;
                     }
-                    loader.style.display = 'none';
-                };
-                img.src = reader.result;
-            };
-            reader.readAsDataURL(file);
-        });
+                    Quagga.start();
+                });
 
-        function processQRData(data) {
-            // Parse the QR code data
-            const lines = data.trim().split('\n');
-            let passData = {};
-            lines.forEach(line => {
-                const [key, value] = line.split(':').map(s => s.trim());
-                if (key && value) {
-                    passData[key] = value;
-                }
-            });
-
-            // Extract 'Valid Until' date and time
-            const validUntilStr = passData['Valid Until'];
-            const validUntil = new Date(validUntilStr);
-
-            const now = new Date();
-
-            let isValid = false;
-            if (validUntil >= now) {
-                isValid = true;
-            }
-
-            // Display modal with pass status
-            if (isValid) {
-                modalContent.classList.add('valid');
-                modalContent.classList.remove('expired');
-                modalTitle.textContent = 'PASS IS VALID';
-                modalMessage.textContent = 'The parking pass is currently valid.';
+                Quagga.onDetected(onDetected);
             } else {
-                modalContent.classList.add('expired');
-                modalContent.classList.remove('valid');
-                modalTitle.textContent = 'PASS HAS EXPIRED';
-                modalMessage.textContent = 'The parking pass has expired.';
+                alert("getUserMedia is not supported by your browser.");
             }
-            statusModal.style.display = 'block';
-
-            // Close modal event
-            closeModal.onclick = function() {
-                statusModal.style.display = 'none';
-            };
-
-            // Close modal when clicking outside of it
-            window.onclick = function(event) {
-                if (event.target == statusModal) {
-                    statusModal.style.display = 'none';
-                }
-            };
-
-            // Display pass details
-            output.innerHTML = `
-                <div class="details">
-                    <p><strong>Date/Time Issued:</strong> ${passData['Date/Time Issued']}</p>
-                    <p><strong>Valid Until:</strong> ${passData['Valid Until']}</p>
-                    <p><strong>Visitor's License Plate:</strong> ${passData["Visitor's License Plate"]}</p>
-                    <p><strong>Unit Number Visiting:</strong> ${passData['Unit Number Visiting']}</p>
-                    <p><strong>Issuing Guard:</strong> ${passData['Issuing Guard']}</p>
-                </div>
-            `;
         }
+
+        // Handle Detected Barcode
+        function onDetected(result) {
+            Quagga.offDetected(onDetected); // Stop detecting after first scan
+            Quagga.stop();
+
+            const code = result.codeResult.code;
+            console.log("Scanned Code:", code);
+
+            // Validate that the scanned code is a valid phone number
+            const phoneNumber = validatePhoneNumber(code);
+
+            if (phoneNumber) {
+                displayPhoneNumber(phoneNumber);
+            } else {
+                displayPhoneNumber("Invalid or No Phone Number Found.", false);
+            }
+        }
+
+        // Validate Phone Number (Assuming it's a 6-digit number or follows a specific pattern)
+        function validatePhoneNumber(code) {
+            // Example validation: 6-digit number
+            const phoneRegex = /^\d{6,15}$/; // Adjust as per your phone number format requirements
+            if (phoneRegex.test(code)) {
+                return code;
+            }
+            return null;
+        }
+
+        // Display Phone Number and Show Call Button
+        function displayPhoneNumber(number, isValid = true) {
+            const phoneNumberElement = document.getElementById('phoneNumber');
+            const callButton = document.getElementById('callButton');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (isValid) {
+                phoneNumberElement.innerText = `Phone Number: ${formatPhoneNumber(number)}`;
+                callButton.href = `tel:${number}`;
+                callButton.style.display = 'inline-block';
+                statusMessage.innerText = "";
+            } else {
+                phoneNumberElement.innerText = number;
+                callButton.style.display = 'none';
+                statusMessage.innerText = "Please scan a valid phone number barcode.";
+            }
+        }
+
+        // Format Phone Number for Display (Optional)
+        function formatPhoneNumber(number) {
+            // Example formatting: (123) 456-7890
+            // Adjust the formatting based on your phone number structure
+            if (number.length === 6) {
+                return number; // For '000000' or similar
+            } else if (number.length === 10) {
+                return `(${number.substring(0,3)}) ${number.substring(3,6)}-${number.substring(6)}`;
+            }
+            return number;
+        }
+
+        // Start the scanner on page load
+        window.addEventListener('load', startScanner);
     </script>
 </body>
 </html>
