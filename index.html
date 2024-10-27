@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parking Pass Verification</title>
+    <!-- Include jsQR Library for QR Code Scanning -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+    <!-- Include Material Icons and Fonts -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Styles for mobile-friendly and modern design */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f4f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            color: #2d6a4f;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .gloucester-logo img {
+            display: block;
+            margin: 0 auto 20px auto;
+            width: 200px;
+            height: auto;
+        }
+
+        .scanner-container {
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #video {
+            width: 100%;
+            border: 2px solid #2d6a4f;
+            border-radius: 8px;
+        }
+
+        #uploadInput {
+            display: none;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            background-color: #2d6a4f;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            text-decoration: none;
+        }
+
+        .btn i.material-icons {
+            margin-right: 8px;
+        }
+
+        .btn:hover {
+            background-color: #22543d;
+        }
+
+        #output {
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .details {
+            margin-top: 10px;
+            font-size: 18px;
+            text-align: left;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .details p {
+            margin: 5px 0;
+        }
+
+        /* Loader Styles */
+        .loader {
+            border: 8px solid #f0f4f7;
+            border-top: 8px solid #2d6a4f;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 999; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-content.valid {
+            border: 5px solid #2d6a4f;
+        }
+
+        .modal-content.expired {
+            border: 5px solid #d00000;
+        }
+
+        .modal-content h2 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+
+        .modal-content.valid h2 {
+            color: #2d6a4f;
+        }
+
+        .modal-content.expired h2 {
+            color: #d00000;
+        }
+
+        .modal-content p {
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background-color: transparent;
+            border: none;
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            .btn {
+                font-size: 14px;
+            }
+
+            .details {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Building Logo -->
+    <div class="gloucester-logo">
+        <img src="https://i.imgur.com/LmweghF.png" alt="The Gloucester Logo">
+    </div>
+
+    <h1>Parking Pass Verification</h1>
+
+    <div class="scanner-container">
+        <!-- Video Element for Scanning -->
+        <video id="video" autoplay playsinline></video>
+    </div>
+
+    <!-- Buttons for Camera and Upload -->
+    <div>
+        <button class="btn" id="startScan">
+            <i class="material-icons">camera_alt</i> Scan QR Code
+        </button>
+        <button class="btn" id="uploadBtn">
+            <i class="material-icons">file_upload</i> Upload QR Code
+        </button>
+        <input type="file" id="uploadInput" accept="image/*">
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" style="display: none;">
+        <div class="loader"></div>
+        <p>Scanning...</p>
+    </div>
+
+    <!-- Output Area -->
+    <div id="output"></div>
+
+    <!-- Modal for Pass Status -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content" id="modalContent">
+            <button class="close-btn" id="closeModal">&times;</button>
+            <h2 id="modalTitle">PASS STATUS</h2>
+            <p id="modalMessage"></p>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const output = document.getElementById('output');
+        const startScanBtn = document.getElementById('startScan');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadInput = document.getElementById('uploadInput');
+        const loader = document.getElementById('loader');
+
+        const statusModal = document.getElementById('statusModal');
+        const modalContent = document.getElementById('modalContent');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const closeModal = document.getElementById('closeModal');
+
+        let scanning = false;
+        let localStream = null;
+
+        // Start camera scan
+        startScanBtn.addEventListener('click', () => {
+            if (scanning) {
+                stopScan();
+            } else {
+                startScan();
+            }
+        });
+
+        function startScan() {
+            output.innerHTML = '';
+            loader.style.display = 'none';
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(function(stream) {
+                scanning = true;
+                localStream = stream;
+                video.srcObject = stream;
+                video.setAttribute('playsinline', true);
+                video.play();
+                requestAnimationFrame(tick);
+                startScanBtn.innerHTML = '<i class="material-icons">close</i> Stop Scan';
+            })
+            .catch(function(err) {
+                output.innerHTML = `<p style="color:red;">Error accessing camera: ${err}</p>`;
+            });
+        }
+
+        function stopScan() {
+            scanning = false;
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            video.srcObject = null;
+            startScanBtn.innerHTML = '<i class="material-icons">camera_alt</i> Scan QR Code';
+        }
+
+        function tick() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvasElement = document.createElement('canvas');
+                const canvas = canvasElement.getContext('2d');
+
+                canvasElement.width = video.videoWidth;
+                canvasElement.height = video.videoHeight;
+                canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+
+                const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                const code = jsQR(imageData.data, canvasElement.width, canvasElement.height);
+
+                if (code) {
+                    stopScan();
+                    processQRData(code.data);
+                    return;
+                }
+            }
+            if (scanning) {
+                requestAnimationFrame(tick);
+            }
+        }
+
+        // Upload image scan
+        uploadBtn.addEventListener('click', () => {
+            uploadInput.click();
+        });
+
+        uploadInput.addEventListener('change', (e) => {
+            if (uploadInput.files.length === 0) {
+                return;
+            }
+            output.innerHTML = '';
+            loader.style.display = 'block';
+
+            const file = uploadInput.files[0];
+            const reader = new FileReader();
+            reader.onload = function() {
+                const img = new Image();
+                img.onload = function() {
+                    const canvasElement = document.createElement('canvas');
+                    const canvas = canvasElement.getContext('2d');
+
+                    canvasElement.width = img.width;
+                    canvasElement.height = img.height;
+                    canvas.drawImage(img, 0, 0, canvasElement.width, canvasElement.height);
+
+                    const imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+                    const code = jsQR(imageData.data, canvasElement.width, canvasElement.height);
+
+                    if (code) {
+                        processQRData(code.data);
+                    } else {
+                        output.innerHTML = `<p style="color:red;">No QR code found in the image.</p>`;
+                    }
+                    loader.style.display = 'none';
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function processQRData(data) {
+            // Parse the QR code data
+            const lines = data.trim().split('\n');
+            let passData = {};
+            lines.forEach(line => {
+                const [key, value] = line.split(':').map(s => s.trim());
+                if (key && value) {
+                    passData[key] = value;
+                }
+            });
+
+            // Extract 'Valid Until' date and time
+            const validUntilStr = passData['Valid Until'];
+            const validUntil = new Date(validUntilStr);
+
+            const now = new Date();
+
+            let isValid = false;
+            if (validUntil >= now) {
+                isValid = true;
+            }
+
+            // Display modal with pass status
+            if (isValid) {
+                modalContent.classList.add('valid');
+                modalContent.classList.remove('expired');
+                modalTitle.textContent = 'PASS IS VALID';
+                modalMessage.textContent = 'The parking pass is currently valid.';
+            } else {
+                modalContent.classList.add('expired');
+                modalContent.classList.remove('valid');
+                modalTitle.textContent = 'PASS HAS EXPIRED';
+                modalMessage.textContent = 'The parking pass has expired.';
+            }
+            statusModal.style.display = 'block';
+
+            // Close modal event
+            closeModal.onclick = function() {
+                statusModal.style.display = 'none';
+            };
+
+            // Close modal when clicking outside of it
+            window.onclick = function(event) {
+                if (event.target == statusModal) {
+                    statusModal.style.display = 'none';
+                }
+            };
+
+            // Display pass details
+            output.innerHTML = `
+                <div class="details">
+                    <p><strong>Date/Time Issued:</strong> ${passData['Date/Time Issued']}</p>
+                    <p><strong>Valid Until:</strong> ${passData['Valid Until']}</p>
+                    <p><strong>Visitor's License Plate:</strong> ${passData["Visitor's License Plate"]}</p>
+                    <p><strong>Unit Number Visiting:</strong> ${passData['Unit Number Visiting']}</p>
+                    <p><strong>Issuing Guard:</strong> ${passData['Issuing Guard']}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
