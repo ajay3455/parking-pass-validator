@@ -39,6 +39,7 @@
             width: 100%;
             max-width: 400px;
             position: relative;
+            margin-bottom: 20px;
         }
 
         /* Video Element */
@@ -69,9 +70,59 @@
             border-radius: 8px;
         }
 
+        /* Controls Section */
+        .controls {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .controls button, .controls label {
+            flex: 1;
+            margin: 0 5px;
+        }
+
+        .controls button {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #2d6a4f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .controls button:hover {
+            background-color: #1b4332;
+        }
+
+        .controls label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #40916c;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .controls label:hover {
+            background-color: #2d6a4f;
+        }
+
+        /* Hidden File Input */
+        #uploadInput {
+            display: none;
+        }
+
         /* Phone Number Display */
         .phone-display {
-            margin-top: 30px;
             width: 100%;
             max-width: 400px;
             text-align: center;
@@ -102,6 +153,13 @@
             background-color: #1b4332;
         }
 
+        /* Status Message */
+        .status {
+            margin-top: 15px;
+            font-size: 16px;
+            color: #d00000;
+        }
+
         /* Responsive Design */
         @media (max-width: 500px) {
             .logo {
@@ -116,13 +174,18 @@
                 font-size: 16px;
                 padding: 10px 16px;
             }
-        }
 
-        /* Status Message */
-        .status {
-            margin-top: 15px;
-            font-size: 16px;
-            color: #d00000;
+            .controls button, .controls label {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .overlay .scan-area {
+                width: 90%;
+                height: 25%;
+                top: 37.5%;
+                left: 5%;
+            }
         }
     </style>
 </head>
@@ -139,6 +202,13 @@
         </div>
     </div>
 
+    <!-- Controls Section -->
+    <div class="controls">
+        <button id="startScanner">Start Scanning</button>
+        <label for="uploadInput">Upload Image</label>
+        <input type="file" id="uploadInput" accept="image/*">
+    </div>
+
     <!-- Phone Number Display Section -->
     <div class="phone-display">
         <div class="phone-number" id="phoneNumber">Scan a barcode to get the phone number.</div>
@@ -147,36 +217,36 @@
     </div>
 
     <script>
-        // Initialize QuaggaJS
-        function startScanner() {
-            if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-                Quagga.init({
-                    inputStream: {
-                        type: "LiveStream",
-                        constraints: {
-                            width: { min: 320 },
-                            height: { min: 240 },
-                            facingMode: "environment" // Use the back camera
-                        },
-                        target: document.querySelector('#video') // Or '#yourElement' (optional)
-                    },
-                    decoder: {
-                        readers: ["code_39_reader"] // Specify the barcode format
-                    },
-                    locate: true
-                }, function(err) {
-                    if (err) {
-                        console.error(err);
-                        document.getElementById('statusMessage').innerText = "Error initializing barcode scanner.";
-                        return;
-                    }
-                    Quagga.start();
-                });
+        // Initialize QuaggaJS for Live Scanning
+        function initQuagga() {
+            if (Quagga.initialized) return; // Prevent multiple initializations
 
-                Quagga.onDetected(onDetected);
-            } else {
-                alert("getUserMedia is not supported by your browser.");
-            }
+            Quagga.init({
+                inputStream: {
+                    type: "LiveStream",
+                    constraints: {
+                        width: { min: 320 },
+                        height: { min: 240 },
+                        facingMode: "environment" // Use the back camera
+                    },
+                    target: document.querySelector('#video') // Video element
+                },
+                decoder: {
+                    readers: ["code_39_reader"] // Specify the barcode format
+                },
+                locate: true
+            }, function(err) {
+                if (err) {
+                    console.error(err);
+                    document.getElementById('statusMessage').innerText = "Error initializing barcode scanner.";
+                    return;
+                }
+                Quagga.initialized = true;
+                Quagga.start();
+                document.getElementById('statusMessage').innerText = "Scanning... Please align the barcode within the frame.";
+            });
+
+            Quagga.onDetected(onDetected);
         }
 
         // Handle Detected Barcode
@@ -197,10 +267,10 @@
             }
         }
 
-        // Validate Phone Number (Assuming it's a 6-digit number or follows a specific pattern)
+        // Validate Phone Number (Adjust regex as needed)
         function validatePhoneNumber(code) {
-            // Example validation: 6-digit number
-            const phoneRegex = /^\d{6,15}$/; // Adjust as per your phone number format requirements
+            // Example validation: 6 to 15 digits
+            const phoneRegex = /^\d{6,15}$/;
             if (phoneRegex.test(code)) {
                 return code;
             }
@@ -223,22 +293,75 @@
                 callButton.style.display = 'none';
                 statusMessage.innerText = "Please scan a valid phone number barcode.";
             }
+
+            // Reset Scanner after a delay to allow rescanning
+            setTimeout(() => {
+                document.getElementById('phoneNumber').innerText = "Scan a barcode to get the phone number.";
+                callButton.style.display = 'none';
+                statusMessage.innerText = "";
+                initQuagga();
+            }, 5000); // 5 seconds
         }
 
         // Format Phone Number for Display (Optional)
         function formatPhoneNumber(number) {
-            // Example formatting: (123) 456-7890
-            // Adjust the formatting based on your phone number structure
-            if (number.length === 6) {
-                return number; // For '000000' or similar
-            } else if (number.length === 10) {
+            // Example formatting: (123) 456-7890 or leave as is for shorter numbers
+            if (number.length === 10) {
                 return `(${number.substring(0,3)}) ${number.substring(3,6)}-${number.substring(6)}`;
+            } else if (number.length > 10) {
+                return number; // Adjust based on international formats if needed
             }
             return number;
         }
 
-        // Start the scanner on page load
-        window.addEventListener('load', startScanner);
+        // Start Scanner Button Event
+        document.getElementById('startScanner').addEventListener('click', function() {
+            document.getElementById('statusMessage').innerText = "";
+            initQuagga();
+        });
+
+        // Handle Image Upload for Scanning
+        document.getElementById('uploadInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function() {
+                const img = new Image();
+                img.src = reader.result;
+                img.onload = function() {
+                    Quagga.decodeSingle({
+                        src: img.src,
+                        numOfWorkers: 0, // Needs to be 0 when used within decodeSingle
+                        inputStream: {
+                            size: 800  // restrict input-size to be scaled to 800px
+                        },
+                        decoder: {
+                            readers: ["code_39_reader"] // Specify the barcode format
+                        },
+                    }, function(result) {
+                        if (result && result.codeResult) {
+                            const code = result.codeResult.code;
+                            console.log("Decoded Code from Image:", code);
+                            const phoneNumber = validatePhoneNumber(code);
+                            if (phoneNumber) {
+                                displayPhoneNumber(phoneNumber);
+                            } else {
+                                displayPhoneNumber("Invalid or No Phone Number Found.", false);
+                            }
+                        } else {
+                            displayPhoneNumber("No barcode detected in the image.", false);
+                        }
+                    });
+                }
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // Initialize Scanner on Page Load
+        window.addEventListener('load', function() {
+            initQuagga();
+        });
     </script>
 </body>
 </html>
