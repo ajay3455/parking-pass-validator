@@ -22,24 +22,11 @@
             box-sizing: border-box;
         }
 
-        /* Dark Mode Variables */
-        body.dark-mode {
-            --bg-color: #2d2d2d;
-            --text-color: #f0f0f0;
-            --item-bg-color: #444;
-            --button-bg-color: #1b4332;
-            --button-hover-bg-color: #14532d;
-            --scan-border-color: #ff5722;
-            --modal-bg-color: rgba(0, 0, 0, 0.8);
-            --modal-content-bg: #ffffff;
-            --modal-text-color: #333333;
-        }
-
         /* Body Styling */
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-color, #e0f7e9);
-            color: var(--text-color, #333);
+            background-color: #e0f7e9;
+            color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -48,37 +35,13 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Dark Mode Toggle Button */
-        .dark-mode-toggle {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background-color: #2d6a4f;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 45px;
-            height: 45px;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-            z-index: 1000;
-        }
-
-        .dark-mode-toggle:hover {
-            background-color: #1b4332;
-        }
-
         /* Gloucester Logo */
         .logo {
             width: 150px;
             margin-bottom: 15px;
         }
 
-        /* Scanner Section */
+        /* Scanner Container */
         .scanner-container {
             width: 100%;
             max-width: 350px;
@@ -107,14 +70,14 @@
             animation: scanLine 2s infinite;
             position: relative;
             box-sizing: border-box;
-            border-color: var(--scan-border-color, #d00000);
+            border-color: #d00000;
         }
 
         /* Scanning Line Animation */
         @keyframes scanLine {
-            0% { border-color: var(--scan-border-color, #d00000); }
-            50% { border-color: var(--scan-border-color, #ff5722); }
-            100% { border-color: var(--scan-border-color, #d00000); }
+            0% { border-color: #d00000; }
+            50% { border-color: #ff5722; }
+            100% { border-color: #d00000; }
         }
 
         /* Flashlight Button */
@@ -251,18 +214,13 @@
         }
 
         .scanned-item {
-            background-color: var(--item-bg-color, #f0f0f0);
+            background-color: #f0f0f0;
             padding: 10px 15px;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             transition: background-color 0.3s;
-        }
-
-        .dark-mode .scanned-item {
-            --item-bg-color: #444;
-            color: #f0f0f0;
         }
 
         .scanned-item .number {
@@ -298,15 +256,15 @@
             width: 100%; /* Full width */
             height: 100%; /* Full height */
             overflow: auto; /* Enable scroll if needed */
-            background-color: var(--modal-bg-color, rgba(0, 0, 0, 0.5)); /* Black w/ opacity */
+            background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .modal-content {
-            background-color: var(--modal-content-bg, #ffffff);
-            color: var(--modal-text-color, #333333);
+            background-color: #ffffff;
+            color: #333333;
             margin: auto;
             padding: 20px;
             border: 1px solid #888;
@@ -316,11 +274,6 @@
             text-align: center;
             position: relative;
             transition: background-color 0.3s, color 0.3s;
-        }
-
-        .modal-content.dark-mode {
-            background-color: #555555;
-            color: #f0f0f0;
         }
 
         /* Close Button */
@@ -393,11 +346,6 @@
     </style>
 </head>
 <body>
-
-    <!-- Dark Mode Toggle Button -->
-    <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
-        <i class="fas fa-moon"></i>
-    </button>
 
     <!-- Gloucester Logo -->
     <img src="https://i.imgur.com/LmweghF.png" alt="Gloucester Logo" class="logo">
@@ -655,22 +603,6 @@
             }
         }
 
-        // Dark Mode Toggle
-        document.getElementById('darkModeToggle').addEventListener('click', function() {
-            document.body.classList.toggle('dark-mode');
-            updateDarkModeIcon();
-            updateModalTheme();
-        });
-
-        function updateDarkModeIcon() {
-            const toggleBtn = document.getElementById('darkModeToggle');
-            if (document.body.classList.contains('dark-mode')) {
-                toggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
-            } else {
-                toggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
-            }
-        }
-
         // Vibration Feedback on Successful Scan
         function vibrateDevice() {
             if (navigator.vibrate) {
@@ -701,16 +633,6 @@
                     modal.style.display = 'none';
                     modal.setAttribute('aria-hidden', 'true');
                 }
-            }
-        }
-
-        // Function to update modal theme based on dark mode
-        function updateModalTheme() {
-            const modalContent = document.querySelector('.modal-content');
-            if (document.body.classList.contains('dark-mode')) {
-                modalContent.classList.add('dark-mode');
-            } else {
-                modalContent.classList.remove('dark-mode');
             }
         }
 
