@@ -20,6 +20,16 @@
             box-sizing: border-box;
         }
 
+        /* Dark Mode Variables */
+        body.dark-mode {
+            --bg-color: #2d2d2d;
+            --text-color: #f0f0f0;
+            --item-bg-color: #444;
+            --button-bg-color: #1b4332;
+            --button-hover-bg-color: #14532d;
+            --scan-border-color: #ff5722;
+        }
+
         /* Body Styling */
         body {
             font-family: 'Roboto', sans-serif;
@@ -33,19 +43,37 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Dark Mode Variables */
-        body.dark-mode {
-            --bg-color: #2d2d2d;
-            --text-color: #f0f0f0;
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #2d6a4f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+            z-index: 1000;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #1b4332;
         }
 
         /* Gloucester Logo */
         .logo {
-            width: 150px;
+            width: 120px;
             margin-bottom: 20px;
         }
 
-        /* Scanner Container */
+        /* Scanner Section */
         .scanner-container {
             width: 100%;
             max-width: 400px;
@@ -61,16 +89,27 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .overlay .scan-area {
             border: 4px dashed #d00000;
             width: 80%;
             height: 20%;
-            position: absolute;
-            top: 40%;
-            left: 10%;
             border-radius: 8px;
+            animation: scanLine 2s infinite;
+            position: relative;
+            box-sizing: border-box;
+            border-color: var(--scan-border-color, #d00000);
+        }
+
+        /* Scanning Line Animation */
+        @keyframes scanLine {
+            0% { border-color: var(--scan-border-color, #d00000); }
+            50% { border-color: var(--scan-border-color, #ff5722); }
+            100% { border-color: var(--scan-border-color, #d00000); }
         }
 
         /* Flashlight Button */
@@ -147,6 +186,18 @@
             background-color: #2d6a4f;
         }
 
+        /* Export CSV Button */
+        .export-button {
+            background-color: #6c757d; /* Gray */
+            color: white;
+            border: none;
+            width: 100%;
+        }
+
+        .export-button:hover {
+            background-color: #5a6268;
+        }
+
         /* Hidden File Input */
         #uploadInput {
             display: none;
@@ -201,13 +252,15 @@
             width: 100%;
             max-width: 400px;
             margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .scanned-item {
             background-color: var(--item-bg-color, #f0f0f0);
             padding: 10px 15px;
             border-radius: 8px;
-            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -242,33 +295,10 @@
             background-color: #1e7e34;
         }
 
-        /* Dark Mode Toggle */
-        .dark-mode-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #2d6a4f;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-        }
-
-        .dark-mode-toggle:hover {
-            background-color: #1b4332;
-        }
-
         /* Responsive Design */
         @media (max-width: 500px) {
             .logo {
-                width: 120px;
+                width: 100px;
             }
 
             .phone-number {
@@ -297,7 +327,7 @@
 <body>
 
     <!-- Dark Mode Toggle Button -->
-    <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle Dark Mode">
+    <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
         <i class="fas fa-moon"></i>
     </button>
 
@@ -314,7 +344,7 @@
 
     <!-- Flashlight Toggle -->
     <div class="flashlight-container">
-        <button id="toggleFlashlight" class="flashlight-button">
+        <button id="toggleFlashlight" class="flashlight-button" aria-label="Toggle Flashlight">
             <i class="fas fa-lightbulb"></i> Turn On Flashlight
         </button>
     </div>
@@ -328,12 +358,15 @@
             <i class="fas fa-upload"></i> Upload Image
         </label>
         <input type="file" id="uploadInput" accept="image/*">
+        <button id="exportCsv" class="export-button">
+            <i class="fas fa-file-csv"></i> Export CSV
+        </button>
     </div>
 
     <!-- Phone Number Display Section -->
     <div class="phone-display">
         <div class="phone-number" id="phoneNumber">Scan a barcode to get the phone number.</div>
-        <a href="#" id="callButton" class="call-button">
+        <a href="#" id="callButton" class="call-button" aria-label="Call Now">
             <i class="fas fa-phone"></i> Call Now
         </a>
         <div class="status" id="statusMessage"></div>
@@ -372,7 +405,7 @@
                 document.getElementById('startScanner').disabled = true;
             }).catch(err => {
                 console.error("Unable to start scanning.", err);
-                document.getElementById('statusMessage').innerText = "Unable to access camera.";
+                document.getElementById('statusMessage').innerText = "Unable to access camera. Please check your permissions.";
             });
         }
 
@@ -380,6 +413,7 @@
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Code matched = ${decodedText}`, decodedResult);
             beepSound.play(); // Play beep sound
+            vibrateDevice(); // Vibrate device
             html5QrCode.pause(); // Pause scanning to process the result
             processScannedCode(decodedText);
         }
@@ -551,6 +585,37 @@
                 toggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
             }
         }
+
+        // Vibration Feedback on Successful Scan
+        function vibrateDevice() {
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]); // Vibrate pattern: vibrate-pause-vibrate
+            }
+        }
+
+        // Export Scanned Numbers as CSV
+        document.getElementById('exportCsv').addEventListener('click', function() {
+            const scannedItems = document.querySelectorAll('.scanned-item .number');
+            if (scannedItems.length === 0) {
+                alert("No scanned numbers to export.");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,Phone Number\n";
+            scannedItems.forEach(item => {
+                // Remove formatting characters for CSV
+                const cleanNumber = item.innerText.replace(/[^0-9]/g, '');
+                csvContent += `${cleanNumber}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "scanned_numbers.csv");
+            document.body.appendChild(link); // Required for FF
+            link.click();
+            document.body.removeChild(link);
+        });
 
         // Initialize Scanner on Page Load
         window.addEventListener('load', function() {
