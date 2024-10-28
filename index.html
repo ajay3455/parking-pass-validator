@@ -28,6 +28,9 @@
             --button-bg-color: #1b4332;
             --button-hover-bg-color: #14532d;
             --scan-border-color: #ff5722;
+            --modal-bg-color: rgba(0, 0, 0, 0.8);
+            --modal-content-bg: #ffffff;
+            --modal-text-color: #333333;
         }
 
         /* Body Styling */
@@ -73,7 +76,7 @@
             margin-bottom: 20px;
         }
 
-        /* Scanner Section */
+        /* Scanner Container */
         .scanner-container {
             width: 100%;
             max-width: 400px;
@@ -186,18 +189,6 @@
             background-color: #2d6a4f;
         }
 
-        /* Export CSV Button */
-        .export-button {
-            background-color: #6c757d; /* Gray */
-            color: white;
-            border: none;
-            width: 100%;
-        }
-
-        .export-button:hover {
-            background-color: #5a6268;
-        }
-
         /* Hidden File Input */
         #uploadInput {
             display: none;
@@ -295,6 +286,57 @@
             background-color: #1e7e34;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 2000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: var(--modal-bg-color, rgba(0, 0, 0, 0.5)); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--modal-content-bg, #ffffff);
+            color: var(--modal-text-color, #333333);
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 300px;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .modal-content.dark-mode {
+            background-color: #555555;
+            color: #f0f0f0;
+        }
+
+        /* Close Button */
+        .close {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+
         /* Responsive Design */
         @media (max-width: 500px) {
             .logo {
@@ -320,6 +362,11 @@
                 height: 20%;
                 top: 40%;
                 left: 10%;
+            }
+
+            .modal-content {
+                width: 90%;
+                max-width: 250px;
             }
         }
     </style>
@@ -358,9 +405,6 @@
             <i class="fas fa-upload"></i> Upload Image
         </label>
         <input type="file" id="uploadInput" accept="image/*">
-        <button id="exportCsv" class="export-button">
-            <i class="fas fa-file-csv"></i> Export CSV
-        </button>
     </div>
 
     <!-- Phone Number Display Section -->
@@ -377,6 +421,18 @@
         <!-- Dynamically added scanned numbers will appear here -->
     </div>
 
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+            <span class="close" id="modalCloseBtn">&times;</span>
+            <h2 id="modalTitle">Scan Successful</h2>
+            <p id="modalMessage">Phone Number: </p>
+            <button id="modalOkBtn" class="call-button">
+                <i class="fas fa-phone"></i> Call Now
+            </button>
+        </div>
+    </div>
+
     <script>
         // Initialize Html5-Qrcode
         const html5QrCode = new Html5Qrcode("reader");
@@ -387,6 +443,12 @@
 
         // Audio for beep sound
         const beepSound = document.getElementById('beepSound');
+
+        // Modal Elements
+        const modal = document.getElementById('confirmationModal');
+        const modalCloseBtn = document.getElementById('modalCloseBtn');
+        const modalOkBtn = document.getElementById('modalOkBtn');
+        const modalMessage = document.getElementById('modalMessage');
 
         // Function to start scanning
         function startScanning() {
@@ -440,6 +502,7 @@
             if (phoneNumber) {
                 addScannedNumber(phoneNumber);
                 displayPhoneNumber(phoneNumber);
+                showConfirmationModal(phoneNumber);
             } else {
                 displayPhoneNumber("Invalid or No Phone Number Found.", false);
             }
@@ -575,6 +638,7 @@
         document.getElementById('darkModeToggle').addEventListener('click', function() {
             document.body.classList.toggle('dark-mode');
             updateDarkModeIcon();
+            updateModalTheme();
         });
 
         function updateDarkModeIcon() {
@@ -593,29 +657,43 @@
             }
         }
 
-        // Export Scanned Numbers as CSV
-        document.getElementById('exportCsv').addEventListener('click', function() {
-            const scannedItems = document.querySelectorAll('.scanned-item .number');
-            if (scannedItems.length === 0) {
-                alert("No scanned numbers to export.");
-                return;
+        // Function to show confirmation modal
+        function showConfirmationModal(number) {
+            const modal = document.getElementById('confirmationModal');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalOkBtn = document.getElementById('modalOkBtn');
+
+            modalMessage.innerText = `Phone Number: ${formatPhoneNumber(number)}`;
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+
+            // Set href for the call button inside the modal
+            modalOkBtn.href = `tel:${number}`;
+
+            // Close modal when clicking on 'x'
+            modalCloseBtn.onclick = function() {
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
             }
 
-            let csvContent = "data:text/csv;charset=utf-8,Phone Number\n";
-            scannedItems.forEach(item => {
-                // Remove formatting characters for CSV
-                const cleanNumber = item.innerText.replace(/[^0-9]/g, '');
-                csvContent += `${cleanNumber}\n`;
-            });
+            // Close modal when clicking outside the modal content
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
+                }
+            }
+        }
 
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "scanned_numbers.csv");
-            document.body.appendChild(link); // Required for FF
-            link.click();
-            document.body.removeChild(link);
-        });
+        // Function to update modal theme based on dark mode
+        function updateModalTheme() {
+            const modalContent = document.querySelector('.modal-content');
+            if (document.body.classList.contains('dark-mode')) {
+                modalContent.classList.add('dark-mode');
+            } else {
+                modalContent.classList.remove('dark-mode');
+            }
+        }
 
         // Initialize Scanner on Page Load
         window.addEventListener('load', function() {
