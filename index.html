@@ -5,6 +5,8 @@
     <title>Gloucester Barcode Scanner</title>
     <!-- Html5-Qrcode Library for Barcode Scanning -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Import Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -42,6 +44,26 @@
             margin-bottom: 20px;
         }
 
+        /* Scan Area Overlay - Rectangular */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .overlay .scan-area {
+            border: 4px dashed #d00000;
+            width: 90%;
+            height: 30%;
+            position: absolute;
+            top: 35%;
+            left: 5%;
+            border-radius: 8px;
+        }
+
         /* Flashlight Button */
         .flashlight-container {
             margin-bottom: 20px;
@@ -55,7 +77,7 @@
         .flashlight-button {
             padding: 10px 20px;
             font-size: 16px;
-            background-color: #2d6a4f;
+            background-color: #ff8c00; /* Dark Orange */
             color: white;
             border: none;
             border-radius: 8px;
@@ -67,7 +89,7 @@
         }
 
         .flashlight-button:hover {
-            background-color: #1b4332;
+            background-color: #e07b00;
         }
 
         /* Controls Section */
@@ -82,12 +104,17 @@
         .controls button, .controls label {
             flex: 1;
             margin: 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
-        .controls button {
+        /* Start Scanning Button */
+        .start-button {
             padding: 10px;
             font-size: 16px;
-            background-color: #2d6a4f;
+            background-color: #2d6a4f; /* Dark Green */
             color: white;
             border: none;
             border-radius: 8px;
@@ -95,24 +122,26 @@
             transition: background-color 0.3s;
         }
 
-        .controls button:hover {
+        .start-button:hover {
             background-color: #1b4332;
         }
 
-        .controls label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Upload Image Label */
+        .upload-label {
             padding: 10px;
             font-size: 16px;
-            background-color: #40916c;
+            background-color: #40916c; /* Teal */
             color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s;
+            justify-content: center;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        .controls label:hover {
+        .upload-label:hover {
             background-color: #2d6a4f;
         }
 
@@ -140,17 +169,21 @@
             display: none; /* Hidden by default */
             padding: 12px 20px;
             font-size: 18px;
-            background-color: #2d6a4f;
+            background-color: #007bff; /* Blue */
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
             transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .call-button:hover {
-            background-color: #1b4332;
+            background-color: #0056b3;
         }
 
         /* Status Message */
@@ -158,6 +191,46 @@
             margin-top: 15px;
             font-size: 16px;
             color: #d00000;
+        }
+
+        /* Scanned Numbers List */
+        .scanned-list {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        .scanned-item {
+            background-color: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scanned-item .number {
+            font-size: 18px;
+        }
+
+        .scanned-item .call-button {
+            background-color: #28a745; /* Green */
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .scanned-item .call-button:hover {
+            background-color: #1e7e34;
         }
 
         /* Responsive Design */
@@ -170,19 +243,21 @@
                 font-size: 20px;
             }
 
-            .call-button {
+            .call-button, .scanned-item .call-button {
                 font-size: 16px;
                 padding: 10px 16px;
             }
 
-            .controls button, .controls label {
+            .controls button, .controls label, .flashlight-button {
                 font-size: 14px;
                 padding: 8px;
             }
 
-            .flashlight-button {
-                font-size: 14px;
-                padding: 8px 16px;
+            .overlay .scan-area {
+                width: 90%;
+                height: 30%;
+                top: 35%;
+                left: 5%;
             }
         }
     </style>
@@ -200,56 +275,74 @@
     <!-- Flashlight Toggle -->
     <div class="flashlight-container">
         <button id="toggleFlashlight" class="flashlight-button">
-            🔦 Turn On Flashlight
+            <i class="fas fa-lightbulb"></i> Turn On Flashlight
         </button>
     </div>
 
     <!-- Controls Section -->
     <div class="controls">
-        <button id="startScanner">Start Scanning</button>
-        <label for="uploadInput">Upload Image</label>
+        <button id="startScanner" class="start-button">
+            <i class="fas fa-play"></i> Start Scanning
+        </button>
+        <label for="uploadInput" class="upload-label">
+            <i class="fas fa-upload"></i> Upload Image
+        </label>
         <input type="file" id="uploadInput" accept="image/*">
     </div>
 
     <!-- Phone Number Display Section -->
     <div class="phone-display">
         <div class="phone-number" id="phoneNumber">Scan a barcode to get the phone number.</div>
-        <a href="#" id="callButton" class="call-button">Call Now</a>
+        <a href="#" id="callButton" class="call-button">
+            <i class="fas fa-phone"></i> Call Now
+        </a>
         <div class="status" id="statusMessage"></div>
+    </div>
+
+    <!-- Scanned Numbers List -->
+    <div class="scanned-list" id="scannedList">
+        <!-- Dynamically added scanned numbers will appear here -->
     </div>
 
     <script>
         // Initialize Html5-Qrcode
         const html5QrCode = new Html5Qrcode("reader");
+        let isScanning = false;
+        let isFlashOn = false;
+        let stream = null;
+        let videoTrack = null;
 
         // Function to start scanning
         function startScanning() {
-            const config = { fps: 10, qrbox: 250 };
+            if (isScanning) return;
+
+            const config = { fps: 15, qrbox: { width: 300, height: 100 }, aspectRatio: 3 }; // Rectangular scan area
+
             html5QrCode.start(
                 { facingMode: "environment" },
                 config,
                 onScanSuccess,
                 onScanFailure
-            ).catch(err => {
+            ).then(() => {
+                isScanning = true;
+                document.getElementById('statusMessage').innerText = "Scanning... Please align the barcode within the frame.";
+                document.getElementById('startScanner').disabled = true;
+            }).catch(err => {
                 console.error("Unable to start scanning.", err);
                 document.getElementById('statusMessage').innerText = "Unable to access camera.";
             });
-            document.getElementById('statusMessage').innerText = "Scanning... Please align the barcode within the frame.";
         }
 
         // Function to handle successful scan
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Code matched = ${decodedText}`, decodedResult);
-            html5QrCode.stop().then(ignore => {
-                processScannedCode(decodedText);
-            }).catch(err => {
-                console.error("Unable to stop scanning.", err);
-            });
+            html5QrCode.pause(); // Pause scanning to process the result
+            processScannedCode(decodedText);
         }
 
         // Function to handle scan failure (optional)
         function onScanFailure(error) {
-            // Handle scan failure if needed
+            // Optionally handle scan failures
             // console.warn(`Scan failed: ${error}`);
         }
 
@@ -267,10 +360,18 @@
         function processScannedCode(code) {
             const phoneNumber = validatePhoneNumber(code);
             if (phoneNumber) {
+                addScannedNumber(phoneNumber);
                 displayPhoneNumber(phoneNumber);
             } else {
                 displayPhoneNumber("Invalid or No Phone Number Found.", false);
             }
+
+            // Resume scanning after a short delay
+            setTimeout(() => {
+                if (isScanning) {
+                    html5QrCode.resume();
+                }
+            }, 3000); // 3 seconds
         }
 
         // Function to display phone number and show call button
@@ -282,26 +383,38 @@
             if (isValid) {
                 phoneNumberElement.innerText = `Phone Number: ${formatPhoneNumber(number)}`;
                 callButton.href = `tel:${number}`;
-                callButton.style.display = 'inline-block';
+                callButton.style.display = 'inline-flex';
                 statusMessage.innerText = "";
             } else {
                 phoneNumberElement.innerText = number;
                 callButton.style.display = 'none';
                 statusMessage.innerText = "Please scan a valid phone number barcode.";
             }
+        }
 
-            // Reset Scanner after a delay to allow rescanning
-            setTimeout(() => {
-                phoneNumberElement.innerText = "Scan a barcode to get the phone number.";
-                callButton.style.display = 'none';
-                statusMessage.innerText = "";
-                startScanning();
-            }, 5000); // 5 seconds
+        // Function to add scanned number to the list
+        function addScannedNumber(number) {
+            const scannedList = document.getElementById('scannedList');
+            const item = document.createElement('div');
+            item.classList.add('scanned-item');
+
+            const numberDiv = document.createElement('div');
+            numberDiv.classList.add('number');
+            numberDiv.innerText = formatPhoneNumber(number);
+
+            const callBtn = document.createElement('a');
+            callBtn.classList.add('call-button');
+            callBtn.href = `tel:${number}`;
+            callBtn.innerHTML = `<i class="fas fa-phone"></i> Call`;
+
+            item.appendChild(numberDiv);
+            item.appendChild(callBtn);
+            scannedList.prepend(item); // Add to the top of the list
         }
 
         // Function to format phone number for display
         function formatPhoneNumber(number) {
-            // Example formatting: (123) 456-7890
+            // Example formatting: (123) 456-7890 or leave as is for shorter numbers
             if (number.length === 10) {
                 return `(${number.substring(0,3)}) ${number.substring(3,6)}-${number.substring(6)}`;
             } else if (number.length === 6) {
@@ -323,7 +436,6 @@
 
             Html5Qrcode.getCameras().then(devices => {
                 if (devices && devices.length) {
-                    // Proceed with processing the image
                     const html5QrCode = new Html5Qrcode("reader");
                     html5QrCode.scanFileV2(file, true)
                         .then(decodedText => {
@@ -341,48 +453,43 @@
         });
 
         // Flashlight Control
-        let isFlashOn = false;
-        let stream = null;
-        let videoTrack = null;
-
         document.getElementById('toggleFlashlight').addEventListener('click', function() {
             toggleFlashlight();
         });
 
         async function toggleFlashlight() {
-            if (!videoTrack) {
-                // Attempt to get the video track
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                videoTrack = stream.getVideoTracks()[0];
-            }
+            try {
+                if (!stream) {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                    videoTrack = stream.getVideoTracks()[0];
+                }
 
-            if (videoTrack) {
-                const capabilities = videoTrack.getCapabilities();
-                if ('torch' in capabilities) {
-                    try {
+                if (videoTrack) {
+                    const capabilities = videoTrack.getCapabilities();
+                    if ('torch' in capabilities) {
                         await videoTrack.applyConstraints({
                             advanced: [{ torch: !isFlashOn }]
                         });
                         isFlashOn = !isFlashOn;
                         updateFlashlightButton();
-                    } catch (err) {
-                        console.error("Could not toggle flashlight:", err);
-                        alert("Unable to toggle flashlight on this device/browser.");
+                    } else {
+                        alert("Flashlight not supported on this device/browser.");
                     }
                 } else {
-                    alert("Flashlight not supported on this device/browser.");
+                    alert("No video track available to control flashlight.");
                 }
-            } else {
-                alert("No video track available to control flashlight.");
+            } catch (err) {
+                console.error("Could not toggle flashlight:", err);
+                alert("Unable to toggle flashlight on this device/browser.");
             }
         }
 
         function updateFlashlightButton() {
             const button = document.getElementById('toggleFlashlight');
             if (isFlashOn) {
-                button.innerHTML = '🔦 Turn Off Flashlight';
+                button.innerHTML = '<i class="fas fa-lightbulb"></i> Turn Off Flashlight';
             } else {
-                button.innerHTML = '🔦 Turn On Flashlight';
+                button.innerHTML = '<i class="fas fa-lightbulb"></i> Turn On Flashlight';
             }
         }
 
