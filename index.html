@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Gloucester Barcode Scanner</title>
-    <!-- QuaggaJS Library for Barcode Scanning -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <!-- Html5-Qrcode Library for Barcode Scanning -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         /* Import Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
@@ -42,32 +42,32 @@
             margin-bottom: 20px;
         }
 
-        /* Video Element */
-        #video {
+        /* Flashlight Button */
+        .flashlight-container {
+            margin-bottom: 20px;
             width: 100%;
-            height: auto;
-            border-radius: 12px;
-            border: 2px solid #2d6a4f;
+            max-width: 400px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
         }
 
-        /* Overlay for Scanning Area */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .overlay .scan-area {
-            border: 4px dashed #d00000;
-            width: 80%;
-            height: 30%;
-            position: absolute;
-            top: 35%;
-            left: 10%;
+        .flashlight-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2d6a4f;
+            color: white;
+            border: none;
             border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flashlight-button:hover {
+            background-color: #1b4332;
         }
 
         /* Controls Section */
@@ -180,11 +180,9 @@
                 padding: 8px;
             }
 
-            .overlay .scan-area {
-                width: 90%;
-                height: 25%;
-                top: 37.5%;
-                left: 5%;
+            .flashlight-button {
+                font-size: 14px;
+                padding: 8px 16px;
             }
         }
     </style>
@@ -196,10 +194,14 @@
 
     <!-- Scanner Section -->
     <div class="scanner-container">
-        <video id="video" autoplay></video>
-        <div class="overlay">
-            <div class="scan-area"></div>
-        </div>
+        <div id="reader" style="width: 100%;"></div>
+    </div>
+
+    <!-- Flashlight Toggle -->
+    <div class="flashlight-container">
+        <button id="toggleFlashlight" class="flashlight-button">
+            🔦 Turn On Flashlight
+        </button>
     </div>
 
     <!-- Controls Section -->
@@ -217,57 +219,41 @@
     </div>
 
     <script>
-        // Initialize QuaggaJS for Live Scanning
-        function initQuagga() {
-            if (Quagga.initialized) return; // Prevent multiple initializations
+        // Initialize Html5-Qrcode
+        const html5QrCode = new Html5Qrcode("reader");
 
-            Quagga.init({
-                inputStream: {
-                    type: "LiveStream",
-                    constraints: {
-                        width: { min: 320 },
-                        height: { min: 240 },
-                        facingMode: "environment" // Use the back camera
-                    },
-                    target: document.querySelector('#video') // Video element
-                },
-                decoder: {
-                    readers: ["code_39_reader"] // Specify the barcode format
-                },
-                locate: true
-            }, function(err) {
-                if (err) {
-                    console.error(err);
-                    document.getElementById('statusMessage').innerText = "Error initializing barcode scanner.";
-                    return;
-                }
-                Quagga.initialized = true;
-                Quagga.start();
-                document.getElementById('statusMessage').innerText = "Scanning... Please align the barcode within the frame.";
+        // Function to start scanning
+        function startScanning() {
+            const config = { fps: 10, qrbox: 250 };
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onScanSuccess,
+                onScanFailure
+            ).catch(err => {
+                console.error("Unable to start scanning.", err);
+                document.getElementById('statusMessage').innerText = "Unable to access camera.";
             });
-
-            Quagga.onDetected(onDetected);
+            document.getElementById('statusMessage').innerText = "Scanning... Please align the barcode within the frame.";
         }
 
-        // Handle Detected Barcode
-        function onDetected(result) {
-            Quagga.offDetected(onDetected); // Stop detecting after first scan
-            Quagga.stop();
-
-            const code = result.codeResult.code;
-            console.log("Scanned Code:", code);
-
-            // Validate that the scanned code is a valid phone number
-            const phoneNumber = validatePhoneNumber(code);
-
-            if (phoneNumber) {
-                displayPhoneNumber(phoneNumber);
-            } else {
-                displayPhoneNumber("Invalid or No Phone Number Found.", false);
-            }
+        // Function to handle successful scan
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Code matched = ${decodedText}`, decodedResult);
+            html5QrCode.stop().then(ignore => {
+                processScannedCode(decodedText);
+            }).catch(err => {
+                console.error("Unable to stop scanning.", err);
+            });
         }
 
-        // Validate Phone Number (Adjust regex as needed)
+        // Function to handle scan failure (optional)
+        function onScanFailure(error) {
+            // Handle scan failure if needed
+            // console.warn(`Scan failed: ${error}`);
+        }
+
+        // Function to validate phone number
         function validatePhoneNumber(code) {
             // Example validation: 6 to 15 digits
             const phoneRegex = /^\d{6,15}$/;
@@ -277,7 +263,17 @@
             return null;
         }
 
-        // Display Phone Number and Show Call Button
+        // Function to process scanned code
+        function processScannedCode(code) {
+            const phoneNumber = validatePhoneNumber(code);
+            if (phoneNumber) {
+                displayPhoneNumber(phoneNumber);
+            } else {
+                displayPhoneNumber("Invalid or No Phone Number Found.", false);
+            }
+        }
+
+        // Function to display phone number and show call button
         function displayPhoneNumber(number, isValid = true) {
             const phoneNumberElement = document.getElementById('phoneNumber');
             const callButton = document.getElementById('callButton');
@@ -296,71 +292,103 @@
 
             // Reset Scanner after a delay to allow rescanning
             setTimeout(() => {
-                document.getElementById('phoneNumber').innerText = "Scan a barcode to get the phone number.";
+                phoneNumberElement.innerText = "Scan a barcode to get the phone number.";
                 callButton.style.display = 'none';
                 statusMessage.innerText = "";
-                initQuagga();
+                startScanning();
             }, 5000); // 5 seconds
         }
 
-        // Format Phone Number for Display (Optional)
+        // Function to format phone number for display
         function formatPhoneNumber(number) {
-            // Example formatting: (123) 456-7890 or leave as is for shorter numbers
+            // Example formatting: (123) 456-7890
             if (number.length === 10) {
                 return `(${number.substring(0,3)}) ${number.substring(3,6)}-${number.substring(6)}`;
-            } else if (number.length > 10) {
-                return number; // Adjust based on international formats if needed
+            } else if (number.length === 6) {
+                return number; // For '000000' or similar
             }
             return number;
         }
 
-        // Start Scanner Button Event
+        // Event Listener for Start Scanning Button
         document.getElementById('startScanner').addEventListener('click', function() {
             document.getElementById('statusMessage').innerText = "";
-            initQuagga();
+            startScanning();
         });
 
-        // Handle Image Upload for Scanning
+        // Event Listener for Image Upload
         document.getElementById('uploadInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = function() {
-                const img = new Image();
-                img.src = reader.result;
-                img.onload = function() {
-                    Quagga.decodeSingle({
-                        src: img.src,
-                        numOfWorkers: 0, // Needs to be 0 when used within decodeSingle
-                        inputStream: {
-                            size: 800  // restrict input-size to be scaled to 800px
-                        },
-                        decoder: {
-                            readers: ["code_39_reader"] // Specify the barcode format
-                        },
-                    }, function(result) {
-                        if (result && result.codeResult) {
-                            const code = result.codeResult.code;
-                            console.log("Decoded Code from Image:", code);
-                            const phoneNumber = validatePhoneNumber(code);
-                            if (phoneNumber) {
-                                displayPhoneNumber(phoneNumber);
-                            } else {
-                                displayPhoneNumber("Invalid or No Phone Number Found.", false);
-                            }
-                        } else {
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    // Proceed with processing the image
+                    const html5QrCode = new Html5Qrcode("reader");
+                    html5QrCode.scanFileV2(file, true)
+                        .then(decodedText => {
+                            processScannedCode(decodedText);
+                        })
+                        .catch(err => {
+                            console.error(err);
                             displayPhoneNumber("No barcode detected in the image.", false);
-                        }
-                    });
+                        });
                 }
-            }
-            reader.readAsDataURL(file);
+            }).catch(err => {
+                console.error(err);
+                displayPhoneNumber("Error accessing cameras.", false);
+            });
         });
+
+        // Flashlight Control
+        let isFlashOn = false;
+        let stream = null;
+        let videoTrack = null;
+
+        document.getElementById('toggleFlashlight').addEventListener('click', function() {
+            toggleFlashlight();
+        });
+
+        async function toggleFlashlight() {
+            if (!videoTrack) {
+                // Attempt to get the video track
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                videoTrack = stream.getVideoTracks()[0];
+            }
+
+            if (videoTrack) {
+                const capabilities = videoTrack.getCapabilities();
+                if ('torch' in capabilities) {
+                    try {
+                        await videoTrack.applyConstraints({
+                            advanced: [{ torch: !isFlashOn }]
+                        });
+                        isFlashOn = !isFlashOn;
+                        updateFlashlightButton();
+                    } catch (err) {
+                        console.error("Could not toggle flashlight:", err);
+                        alert("Unable to toggle flashlight on this device/browser.");
+                    }
+                } else {
+                    alert("Flashlight not supported on this device/browser.");
+                }
+            } else {
+                alert("No video track available to control flashlight.");
+            }
+        }
+
+        function updateFlashlightButton() {
+            const button = document.getElementById('toggleFlashlight');
+            if (isFlashOn) {
+                button.innerHTML = '🔦 Turn Off Flashlight';
+            } else {
+                button.innerHTML = '🔦 Turn On Flashlight';
+            }
+        }
 
         // Initialize Scanner on Page Load
         window.addEventListener('load', function() {
-            initQuagga();
+            startScanning();
         });
     </script>
 </body>
