@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Gloucester Barcode Scanner</title>
+    <!-- Viewport Meta Tag for Responsive Design -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Html5-Qrcode Library for Barcode Scanning -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <!-- Font Awesome for Icons -->
@@ -42,21 +44,21 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
             transition: background-color 0.3s, color 0.3s;
         }
 
         /* Dark Mode Toggle Button */
         .dark-mode-toggle {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             background-color: #2d6a4f;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             cursor: pointer;
             font-size: 18px;
             display: flex;
@@ -72,16 +74,16 @@
 
         /* Gloucester Logo */
         .logo {
-            width: 120px;
-            margin-bottom: 20px;
+            width: 150px;
+            margin-bottom: 15px;
         }
 
-        /* Scanner Container */
+        /* Scanner Section */
         .scanner-container {
             width: 100%;
-            max-width: 400px;
+            max-width: 350px;
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         /* Scan Area Overlay - Smaller Rectangular */
@@ -98,9 +100,9 @@
         }
 
         .overlay .scan-area {
-            border: 4px dashed #d00000;
-            width: 80%;
-            height: 20%;
+            border: 3px dashed #d00000;
+            width: 70%;
+            height: 15%;
             border-radius: 8px;
             animation: scanLine 2s infinite;
             position: relative;
@@ -117,16 +119,15 @@
 
         /* Flashlight Button */
         .flashlight-container {
-            margin-bottom: 20px;
             width: 100%;
-            max-width: 400px;
+            max-width: 350px;
             display: flex;
             justify-content: center;
-            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .flashlight-button {
-            padding: 10px 20px;
+            padding: 10px 18px;
             font-size: 16px;
             background-color: #ff8c00; /* Dark Orange */
             color: white;
@@ -136,7 +137,8 @@
             transition: background-color 0.3s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            width: 100%;
         }
 
         .flashlight-button:hover {
@@ -146,25 +148,24 @@
         /* Controls Section */
         .controls {
             width: 100%;
-            max-width: 400px;
+            max-width: 350px;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 10px;
+            margin-bottom: 15px;
         }
 
         .controls button, .controls label {
-            flex: 1 1 45%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            padding: 10px;
+            gap: 6px;
+            padding: 12px;
             font-size: 16px;
             border-radius: 8px;
             cursor: pointer;
             transition: background-color 0.3s;
+            width: 100%;
         }
 
         /* Start Scanning Button */
@@ -197,23 +198,23 @@
         /* Phone Number Display */
         .phone-display {
             width: 100%;
-            max-width: 400px;
+            max-width: 350px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .phone-number {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             word-wrap: break-word;
         }
 
         /* Call Button */
         .call-button {
             display: none; /* Hidden by default */
-            padding: 12px 20px;
-            font-size: 18px;
+            padding: 10px 16px;
+            font-size: 16px;
             background-color: #007bff; /* Blue */
             color: white;
             border: none;
@@ -224,7 +225,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
+            width: 100%;
         }
 
         .call-button:hover {
@@ -233,16 +235,16 @@
 
         /* Status Message */
         .status {
-            margin-top: 15px;
-            font-size: 16px;
+            margin-top: 10px;
+            font-size: 14px;
             color: #d00000;
         }
 
         /* Scanned Numbers List */
         .scanned-list {
             width: 100%;
-            max-width: 400px;
-            margin-top: 20px;
+            max-width: 350px;
+            margin-top: 15px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -264,7 +266,7 @@
         }
 
         .scanned-item .number {
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .scanned-item .call-button {
@@ -278,7 +280,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 4px;
             font-size: 14px;
         }
 
@@ -297,6 +299,7 @@
             height: 100%; /* Full height */
             overflow: auto; /* Enable scroll if needed */
             background-color: var(--modal-bg-color, rgba(0, 0, 0, 0.5)); /* Black w/ opacity */
+            display: flex;
             align-items: center;
             justify-content: center;
         }
@@ -307,7 +310,7 @@
             margin: auto;
             padding: 20px;
             border: 1px solid #888;
-            width: 80%;
+            width: 90%;
             max-width: 300px;
             border-radius: 10px;
             text-align: center;
@@ -326,7 +329,7 @@
             position: absolute;
             top: 10px;
             right: 15px;
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             cursor: pointer;
         }
@@ -341,32 +344,50 @@
         @media (max-width: 500px) {
             .logo {
                 width: 100px;
+                margin-bottom: 10px;
             }
 
             .phone-number {
-                font-size: 20px;
+                font-size: 18px;
+                margin-bottom: 8px;
             }
 
             .call-button, .scanned-item .call-button {
-                font-size: 16px;
-                padding: 10px 16px;
+                font-size: 14px;
+                padding: 8px 12px;
             }
 
             .controls button, .controls label, .flashlight-button {
                 font-size: 14px;
-                padding: 8px;
+                padding: 10px;
             }
 
             .overlay .scan-area {
                 width: 80%;
-                height: 20%;
-                top: 40%;
+                height: 18%;
+                top: 41%;
                 left: 10%;
             }
 
             .modal-content {
                 width: 90%;
                 max-width: 250px;
+                padding: 15px;
+            }
+
+            .modal-content h2 {
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+
+            .modal-content p {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+
+            .modal-content .call-button {
+                font-size: 16px;
+                padding: 10px 14px;
             }
         }
     </style>
@@ -427,9 +448,9 @@
             <span class="close" id="modalCloseBtn">&times;</span>
             <h2 id="modalTitle">Scan Successful</h2>
             <p id="modalMessage">Phone Number: </p>
-            <button id="modalOkBtn" class="call-button">
+            <a href="#" id="modalCallBtn" class="call-button" aria-label="Call Now">
                 <i class="fas fa-phone"></i> Call Now
-            </button>
+            </a>
         </div>
     </div>
 
@@ -447,7 +468,7 @@
         // Modal Elements
         const modal = document.getElementById('confirmationModal');
         const modalCloseBtn = document.getElementById('modalCloseBtn');
-        const modalOkBtn = document.getElementById('modalOkBtn');
+        const modalCallBtn = document.getElementById('modalCallBtn');
         const modalMessage = document.getElementById('modalMessage');
 
         // Function to start scanning
@@ -524,7 +545,7 @@
             if (isValid) {
                 phoneNumberElement.innerText = `Phone Number: ${formatPhoneNumber(number)}`;
                 callButton.href = `tel:${number}`;
-                callButton.style.display = 'inline-flex';
+                callButton.style.display = 'flex';
                 statusMessage.innerText = "";
             } else {
                 phoneNumberElement.innerText = number;
@@ -661,14 +682,12 @@
         function showConfirmationModal(number) {
             const modal = document.getElementById('confirmationModal');
             const modalMessage = document.getElementById('modalMessage');
-            const modalOkBtn = document.getElementById('modalOkBtn');
+            const modalCallBtn = document.getElementById('modalCallBtn');
 
             modalMessage.innerText = `Phone Number: ${formatPhoneNumber(number)}`;
+            modalCallBtn.href = `tel:${number}`;
             modal.style.display = 'flex';
             modal.setAttribute('aria-hidden', 'false');
-
-            // Set href for the call button inside the modal
-            modalOkBtn.href = `tel:${number}`;
 
             // Close modal when clicking on 'x'
             modalCloseBtn.onclick = function() {
